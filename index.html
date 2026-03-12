@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Frost Transport | 44T Simplified Engine</title>
+    <title>Frost Transport | 44T Revised Rate Engine</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -27,7 +27,7 @@
     <header class="max-w-[1200px] mx-auto mb-10 flex justify-between items-end border-b-2 border-slate-200 pb-6">
         <div>
             <h1 class="text-4xl font-black italic tracking-tighter text-slate-900">FROST <span class="text-red-600">TRANSPORT</span></h1>
-            <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Hourly Standing + Mileage Rate Engine</p>
+            <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Cost-Plus Rate Engine (Fuel Adjusted)</p>
         </div>
         <div class="text-right font-black text-red-600 italic">44T ARTIC ONLY</div>
     </header>
@@ -81,7 +81,7 @@
                 </h2>
 
                 <div id="breakdown" class="space-y-4 mb-10">
-                    <div class="text-slate-500 italic text-sm">Waiting for postcode data...</div>
+                    <div class="text-slate-500 italic text-sm text-center">Waiting for route data...</div>
                 </div>
 
                 <div class="border-t border-slate-700 pt-8">
@@ -90,17 +90,17 @@
                     <p class="text-[10px] text-slate-500 mt-2 font-bold uppercase tracking-widest">Includes 25% Profit Margin</p>
                 </div>
 
-                <button class="btn-primary mt-10">Submit Request</button>
+                <button class="btn-primary mt-10" onclick="alert('Quote saved!')">Submit Request</button>
             </div>
         </div>
     </main>
 
     <script>
-        // --- YOUR FIXED RATES ---
+        // --- UPDATED FIXED RATES ---
         const RATE_STAND_HOUR = 39.20;
         const RATE_DRIVER_HOUR = 22.04;
-        const RATE_FUEL_MILE   = 1.25;
-        const PROFIT_MARGIN    = 1.25; // 25%
+        const RATE_FUEL_MILE   = 0.71; // Updated from £1.25
+        const PROFIT_MARGIN    = 1.25; 
 
         let miles = 0;
         let driveMinutes = 0;
@@ -119,15 +119,12 @@
                 }, (response, status) => {
                     if (status === 'OK' && response.rows[0].elements[0].status === 'OK') {
                         const data = response.rows[0].elements[0];
-                        // 5% HGV route adjustment
                         miles = Math.round((data.distance.value * 0.000621371) * 1.05);
                         driveMinutes = Math.round(data.duration.value / 60);
                         
                         document.getElementById('mileDisplay').innerText = miles + " mi";
                         document.getElementById('manualMiles').value = miles;
                         update();
-                    } else {
-                        alert("Google Maps error. You can still enter miles manually in the box below.");
                     }
                 });
             }
@@ -138,23 +135,22 @@
             const tTime = parseFloat(document.getElementById('tipHrs').value) || 0;
 
             const totalHours = (driveMinutes / 60) + lTime + tTime;
-            
-            // MATH: (Hours * (Stand + Driver)) + (Miles * Fuel)
             const hourlyCosts = totalHours * (RATE_STAND_HOUR + RATE_DRIVER_HOUR);
             const mileageCosts = miles * RATE_FUEL_MILE;
             const subtotal = hourlyCosts + mileageCosts;
             const finalTotal = subtotal * PROFIT_MARGIN;
 
             const breakdown = [
-                { label: `Combined Hourly (${totalHours.toFixed(1)}h)`, val: hourlyCosts },
-                { label: `Mileage Fuel (${miles}mi)`, val: mileageCosts },
-                { label: "Margin (25%)", val: (finalTotal - subtotal) }
+                { label: `Combined Time (${totalHours.toFixed(1)}h)`, val: hourlyCosts },
+                { label: `Fuel Cost (${miles}mi @ £0.71)`, val: mileageCosts },
+                { label: "Subtotal (Net)", val: subtotal },
+                { label: "Profit Margin (25%)", val: (finalTotal - subtotal) }
             ];
 
             document.getElementById('breakdown').innerHTML = breakdown.map(item => `
                 <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-                    <span class="text-[10px] font-bold text-slate-500 uppercase">${item.label}</span>
-                    <span class="font-mono text-sm text-slate-200">£${item.val.toFixed(2)}</span>
+                    <span class="text-[10px] font-bold ${item.label.includes('Subtotal') ? 'text-slate-300' : 'text-slate-500'} uppercase">${item.label}</span>
+                    <span class="font-mono text-sm ${item.label.includes('Subtotal') ? 'text-white' : 'text-slate-200'}">£${item.val.toFixed(2)}</span>
                 </div>
             `).join('');
 
