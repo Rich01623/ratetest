@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Frost Transport | 44T Revised Rate Engine</title>
+    <title>Frost Transport | 44T Full Breakdown Engine</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDOPkYduNBvti4HWX2izIhCrrQ02uk5SL0&libraries=geometry,distance_matrix"></script>
     
@@ -15,59 +14,52 @@
         :root { --frost-red: #c32026; --frost-grey: #1e293b; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #f1f5f9; }
         .frost-card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        .frost-input { height: 50px; border: 2px solid #e2e8f0; padding: 0 1rem; border-radius: 8px; width: 100%; font-size: 1rem; outline: none; transition: all 0.2s; }
-        .frost-input:focus { border-color: var(--frost-red); }
+        .frost-input { height: 50px; border: 2px solid #e2e8f0; padding: 0 1rem; border-radius: 8px; width: 100%; font-size: 1rem; outline: none; }
         .label-text { font-size: 12px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 8px; display: block; }
-        .btn-primary { background: var(--frost-red); color: white; font-weight: 900; text-transform: uppercase; padding: 1.25rem; border-radius: 8px; cursor: pointer; width: 100%; transition: transform 0.1s; }
-        .btn-primary:active { transform: scale(0.98); }
+        .btn-primary { background: var(--frost-red); color: white; font-weight: 900; text-transform: uppercase; padding: 1.25rem; border-radius: 8px; cursor: pointer; width: 100%; }
     </style>
 </head>
 <body class="p-10">
 
-    <header class="max-w-[1200px] mx-auto mb-10 flex justify-between items-end border-b-2 border-slate-200 pb-6">
-        <div>
-            <h1 class="text-4xl font-black italic tracking-tighter text-slate-900">FROST <span class="text-red-600">TRANSPORT</span></h1>
-            <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Cost-Plus Rate Engine (Fuel Adjusted)</p>
-        </div>
-        <div class="text-right font-black text-red-600 italic">44T ARTIC ONLY</div>
+    <header class="max-w-[1200px] mx-auto mb-10 border-b-2 border-slate-200 pb-6">
+        <h1 class="text-4xl font-black italic tracking-tighter text-slate-900">FROST <span class="text-red-600">TRANSPORT</span></h1>
+        <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Detailed Time & Mileage Engine</p>
     </header>
 
     <main class="max-w-[1200px] mx-auto grid grid-cols-12 gap-10">
         
         <div class="col-span-7 space-y-8">
             <section class="frost-card">
-                <h3 class="label-text text-red-600 text-lg mb-6 underline decoration-2">01. Journey & Distance</h3>
+                <h3 class="label-text text-red-600 text-lg mb-6 underline decoration-2">01. Route Calculation</h3>
                 <div class="grid grid-cols-2 gap-6">
-                    <div>
-                        <span class="label-text">Collection Postcode</span>
-                        <input type="text" id="pickup" class="frost-input uppercase font-bold" placeholder="E.G. NG24" onchange="calculate()">
-                    </div>
-                    <div>
-                        <span class="label-text">Delivery Postcode</span>
-                        <input type="text" id="delivery" class="frost-input uppercase font-bold" placeholder="E.G. W1A" onchange="calculate()">
-                    </div>
+                    <input type="text" id="pickup" class="frost-input uppercase font-bold" placeholder="COLLECTION POSTCODE" onchange="calculate()">
+                    <input type="text" id="delivery" class="frost-input uppercase font-bold" placeholder="DELIVERY POSTCODE" onchange="calculate()">
                 </div>
-                <div class="mt-6 p-4 bg-slate-50 rounded-lg flex items-center justify-between">
-                    <div>
-                        <span class="label-text">Auto-Calculated Miles</span>
+                <div class="grid grid-cols-2 gap-6 mt-6">
+                    <div class="p-4 bg-slate-50 rounded-lg">
+                        <span class="label-text">Google Distance</span>
                         <div id="mileDisplay" class="text-2xl font-black italic text-slate-900">0 mi</div>
                     </div>
-                    <div class="w-1/3 text-right">
-                        <span class="label-text">Manual Adjustment</span>
-                        <input type="number" id="manualMiles" class="frost-input text-right" placeholder="0" oninput="miles = parseFloat(this.value) || 0; update();">
+                    <div class="p-4 bg-slate-50 rounded-lg">
+                        <span class="label-text">Google Drive Time</span>
+                        <div id="driveTimeDisplay" class="text-2xl font-black italic text-slate-900">0h 0m</div>
                     </div>
+                </div>
+                <div class="mt-4">
+                    <span class="label-text">Manual Mileage Adjustment</span>
+                    <input type="number" id="manualMiles" class="frost-input w-full" placeholder="Override miles if required" oninput="miles = parseFloat(this.value) || 0; update();">
                 </div>
             </section>
 
             <section class="frost-card">
-                <h3 class="label-text text-red-600 text-lg mb-6 underline decoration-2">02. Time Windows</h3>
+                <h3 class="label-text text-red-600 text-lg mb-6 underline decoration-2">02. On-Site Windows</h3>
                 <div class="grid grid-cols-2 gap-6">
                     <div>
-                        <span class="label-text">Loading Window (Hrs)</span>
+                        <span class="label-text">Loading (Hrs)</span>
                         <input type="number" id="loadHrs" value="2" step="0.5" class="frost-input" oninput="update()">
                     </div>
                     <div>
-                        <span class="label-text">Tipping Window (Hrs)</span>
+                        <span class="label-text">Tipping (Hrs)</span>
                         <input type="number" id="tipHrs" value="2" step="0.5" class="frost-input" oninput="update()">
                     </div>
                 </div>
@@ -76,31 +68,29 @@
 
         <div class="col-span-5">
             <div class="bg-slate-900 text-white p-8 rounded-2xl shadow-2xl sticky top-10 border-b-8 border-red-600">
-                <h2 class="text-xl font-black italic uppercase text-red-500 mb-8 flex justify-between">
-                    Live Rate <i class="fa-solid fa-bolt"></i>
-                </h2>
+                <h2 class="text-xl font-black italic uppercase text-red-500 mb-8">Detailed Breakdown</h2>
 
                 <div id="breakdown" class="space-y-4 mb-10">
-                    <div class="text-slate-500 italic text-sm text-center">Waiting for route data...</div>
-                </div>
+                    </div>
 
                 <div class="border-t border-slate-700 pt-8">
-                    <span class="label-text text-slate-400">Final Quote (Ex VAT)</span>
+                    <span class="label-text text-slate-400">Total Quote (Ex VAT)</span>
                     <div id="totalDisp" class="text-6xl font-black italic tracking-tighter text-white mt-2">£0.00</div>
-                    <p class="text-[10px] text-slate-500 mt-2 font-bold uppercase tracking-widest">Includes 25% Profit Margin</p>
+                    <p class="text-[10px] text-slate-500 mt-2 font-bold uppercase">Base Costs + 25% Margin</p>
                 </div>
 
-                <button class="btn-primary mt-10" onclick="alert('Quote saved!')">Submit Request</button>
+                <button class="btn-primary mt-10" onclick="alert('Confirmed')">Confirm Quote</button>
             </div>
         </div>
     </main>
 
     <script>
-        // --- UPDATED FIXED RATES ---
         const RATE_STAND_HOUR = 39.20;
         const RATE_DRIVER_HOUR = 22.04;
-        const RATE_FUEL_MILE   = 0.71; // Updated from £1.25
-        const PROFIT_MARGIN    = 1.25; 
+        const RATE_FUEL_MILE   = 0.71; 
+        const PROFIT_MARGIN    = 1.25;
+
+        const HOURLY_TOTAL = RATE_STAND_HOUR + RATE_DRIVER_HOUR; // £61.24 combined
 
         let miles = 0;
         let driveMinutes = 0;
@@ -123,6 +113,7 @@
                         driveMinutes = Math.round(data.duration.value / 60);
                         
                         document.getElementById('mileDisplay').innerText = miles + " mi";
+                        document.getElementById('driveTimeDisplay').innerText = Math.floor(driveMinutes/60) + "h " + (driveMinutes%60) + "m";
                         document.getElementById('manualMiles').value = miles;
                         update();
                     }
@@ -133,24 +124,28 @@
         function update() {
             const lTime = parseFloat(document.getElementById('loadHrs').value) || 0;
             const tTime = parseFloat(document.getElementById('tipHrs').value) || 0;
+            const onSiteTime = lTime + tTime;
+            const driveHrs = driveMinutes / 60;
 
-            const totalHours = (driveMinutes / 60) + lTime + tTime;
-            const hourlyCosts = totalHours * (RATE_STAND_HOUR + RATE_DRIVER_HOUR);
-            const mileageCosts = miles * RATE_FUEL_MILE;
-            const subtotal = hourlyCosts + mileageCosts;
-            const finalTotal = subtotal * PROFIT_MARGIN;
+            const driveCost = driveHrs * HOURLY_TOTAL;
+            const onSiteCost = onSiteTime * HOURLY_TOTAL;
+            const fuelCost = miles * RATE_FUEL_MILE;
 
-            const breakdown = [
-                { label: `Combined Time (${totalHours.toFixed(1)}h)`, val: hourlyCosts },
-                { label: `Fuel Cost (${miles}mi @ £0.71)`, val: mileageCosts },
-                { label: "Subtotal (Net)", val: subtotal },
-                { label: "Profit Margin (25%)", val: (finalTotal - subtotal) }
+            const netTotal = driveCost + onSiteCost + fuelCost;
+            const finalTotal = netTotal * PROFIT_MARGIN;
+
+            const items = [
+                { label: `Driving Time (${driveHrs.toFixed(2)}h)`, val: driveCost },
+                { label: `On-Site Time (${onSiteTime.toFixed(2)}h)`, val: onSiteCost },
+                { label: `Mileage Fuel (${miles}mi @ £0.71)`, val: fuelCost },
+                { label: "Net Operational Cost", val: netTotal, highlight: true },
+                { label: "Margin (25%)", val: (finalTotal - netTotal) }
             ];
 
-            document.getElementById('breakdown').innerHTML = breakdown.map(item => `
+            document.getElementById('breakdown').innerHTML = items.map(i => `
                 <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-                    <span class="text-[10px] font-bold ${item.label.includes('Subtotal') ? 'text-slate-300' : 'text-slate-500'} uppercase">${item.label}</span>
-                    <span class="font-mono text-sm ${item.label.includes('Subtotal') ? 'text-white' : 'text-slate-200'}">£${item.val.toFixed(2)}</span>
+                    <span class="text-[10px] font-bold ${i.highlight ? 'text-white' : 'text-slate-500'} uppercase">${i.label}</span>
+                    <span class="font-mono text-sm ${i.highlight ? 'text-red-500 font-black' : 'text-slate-200'}">£${i.val.toFixed(2)}</span>
                 </div>
             `).join('');
 
