@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Frost Transport | HGV Dashboard v5.0</title>
+    <title>Frost Transport | HGV Dashboard v5.1</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -40,7 +40,7 @@
         <img src="logo.png" alt="Frost Transport" class="logo-img">
         <div class="text-right pb-2 text-slate-900">
             <h2 class="text-[10px] font-black uppercase tracking-widest opacity-60">Rate Engine</h2>
-            <p class="text-xs font-bold text-red-600 italic">44T Card-Verified v5.0</p>
+            <p class="text-xs font-bold text-red-600 italic">Precision Sync v5.1</p>
         </div>
     </header>
 
@@ -80,7 +80,7 @@
                             </div>
                             <div class="p-2 bg-slate-50 border border-slate-100 rounded-lg text-center">
                                 <span class="label-text">Transit Hrs</span>
-                                <input type="number" id="timeInput" step="0.01" class="frost-input text-center font-black text-lg" value="0.00" oninput="update()" disabled>
+                                <input type="number" id="timeInput" step="0.0001" class="frost-input text-center font-black text-lg" value="0.00" oninput="update()" disabled>
                             </div>
                         </div>
                     </div>
@@ -134,10 +134,10 @@
 </div>
 
 <script>
-    // FIGURES EXTRACTED FROM BOSS'S SHEET
-    const RATE_DRIVER_HOUR = 22.04;
-    const RATE_STAND_HOUR = 32.09; // Sum of Truck, Trailer, Overheads, Staff per hour
-    const HOURLY_TOTAL = RATE_DRIVER_HOUR + RATE_STAND_HOUR;
+    // PRECISE CONSTANTS FROM DATA-NEW AND DRIVER-WAGES SHEETS
+    const RATE_DRIVER_HOUR = 22.040844;
+    const RATE_STAND_HOUR = 39.200982; // Updated: Includes the 'Daily Standing' + Average Fuel
+    const HOURLY_TOTAL = RATE_DRIVER_HOUR + RATE_STAND_HOUR; // 61.241826
     const TRUCK_TIME_MULTIPLIER = 1.25; 
     const MPG = 8;
     const LITRES_PER_GALLON = 4.546;
@@ -151,7 +151,7 @@
         const tI = document.getElementById('timeInput');
         mI.disabled = !isM; tI.disabled = !isM;
         if(isM) { mI.classList.add('manual-active'); tI.classList.add('manual-active'); } 
-        else { mI.classList.remove('manual-active'); tI.classList.remove('manual-active'); mI.value = autoMiles; tI.value = parseFloat(((autoMinutes / 60) * TRUCK_TIME_MULTIPLIER).toFixed(2)); }
+        else { mI.classList.remove('manual-active'); tI.classList.remove('manual-active'); mI.value = autoMiles; tI.value = parseFloat(((autoMinutes / 60) * TRUCK_TIME_MULTIPLIER).toFixed(4)); }
         update();
     }
 
@@ -170,7 +170,7 @@
                     autoMinutes = Math.round(data.duration.value / 60);
                     if(!document.getElementById('manualMode').checked) {
                         document.getElementById('mileInput').value = autoMiles;
-                        document.getElementById('timeInput').value = parseFloat(((autoMinutes / 60) * TRUCK_TIME_MULTIPLIER).toFixed(2));
+                        document.getElementById('timeInput').value = parseFloat(((autoMinutes / 60) * TRUCK_TIME_MULTIPLIER).toFixed(4));
                     }
                     update();
                 }
@@ -187,10 +187,10 @@
         const loadHrs = parseFloat(document.getElementById('loadHrs').value) || 0;
         const tipHrs = parseFloat(document.getElementById('tipHrs').value) || 0;
         
-        const totalHrs = parseFloat((driveHrs + loadHrs + tipHrs).toFixed(2));
+        const totalHrs = driveHrs + loadHrs + tipHrs;
         const timeCost = totalHrs * HOURLY_TOTAL;
         
-        // MPG Fuel Formula: (Miles / MPG) * LitresPerGallon * PricePerLitre
+        // MPG Fuel Formula: (Miles / MPG) * 4.546 * PPL
         const fuelCost = (miles / MPG) * LITRES_PER_GALLON * ppl;
         
         let extras = 0;
@@ -203,7 +203,7 @@
         const finalTotal = netTotal * margin;
 
         document.getElementById('breakdown').innerHTML = `
-            <div class="flex justify-between border-b border-slate-800 pb-1"><span class="text-[9px] font-bold text-slate-500 uppercase">Time (${totalHrs} hrs)</span><span class="font-mono text-xs text-slate-200">£${timeCost.toFixed(2)}</span></div>
+            <div class="flex justify-between border-b border-slate-800 pb-1"><span class="text-[9px] font-bold text-slate-500 uppercase">Time (${totalHrs.toFixed(3)} hrs)</span><span class="font-mono text-xs text-slate-200">£${timeCost.toFixed(2)}</span></div>
             <div class="flex justify-between border-b border-slate-800 pb-1"><span class="text-[9px] font-bold text-slate-500 uppercase">Fuel (${miles} mi)</span><span class="font-mono text-xs text-slate-200">£${fuelCost.toFixed(2)}</span></div>
             ${extras > 0 ? `<div class="flex justify-between border-b border-slate-800 pb-1"><span class="text-[9px] font-bold text-slate-500 uppercase">Surcharges</span><span class="font-mono text-xs text-slate-200">£${extras.toFixed(2)}</span></div>` : ''}
             <div class="flex justify-between border-b border-slate-800 pb-1"><span class="text-[9px] font-bold text-white uppercase">Net Costs</span><span class="font-mono text-xs text-red-500 font-black">£${netTotal.toFixed(2)}</span></div>
