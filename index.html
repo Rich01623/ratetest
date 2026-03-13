@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Frost Transport | HGV Dashboard v5.1</title>
+    <title>Frost Transport | HGV Dashboard v5.2</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -40,7 +40,7 @@
         <img src="logo.png" alt="Frost Transport" class="logo-img">
         <div class="text-right pb-2 text-slate-900">
             <h2 class="text-[10px] font-black uppercase tracking-widest opacity-60">Rate Engine</h2>
-            <p class="text-xs font-bold text-red-600 italic">Precision Sync v5.1</p>
+            <p class="text-xs font-bold text-red-600 italic">Precision Sync v5.2</p>
         </div>
     </header>
 
@@ -136,8 +136,8 @@
 <script>
     // PRECISE CONSTANTS FROM DATA-NEW AND DRIVER-WAGES SHEETS
     const RATE_DRIVER_HOUR = 22.040844;
-    const RATE_STAND_HOUR = 39.200982; // Updated: Includes the 'Daily Standing' + Average Fuel
-    const HOURLY_TOTAL = RATE_DRIVER_HOUR + RATE_STAND_HOUR; // 61.241826
+    const RATE_STAND_HOUR = 39.200982; 
+    const HOURLY_TOTAL = RATE_DRIVER_HOUR + RATE_STAND_HOUR; 
     const TRUCK_TIME_MULTIPLIER = 1.25; 
     const MPG = 8;
     const LITRES_PER_GALLON = 4.546;
@@ -200,7 +200,12 @@
         
         const netTotal = timeCost + fuelCost + extras;
         const margin = parseFloat(document.getElementById('marginSelect').value);
-        const finalTotal = netTotal * margin;
+        
+        // RAW COST WITH MARGIN
+        const rawFinalTotal = netTotal * margin;
+        
+        // ROUND UP TO NEAREST £10 (EXACTLY LIKE EXCEL'S CEILING)
+        const finalTotal = Math.ceil(rawFinalTotal / 10) * 10;
 
         document.getElementById('breakdown').innerHTML = `
             <div class="flex justify-between border-b border-slate-800 pb-1"><span class="text-[9px] font-bold text-slate-500 uppercase">Time (${totalHrs.toFixed(3)} hrs)</span><span class="font-mono text-xs text-slate-200">£${timeCost.toFixed(2)}</span></div>
