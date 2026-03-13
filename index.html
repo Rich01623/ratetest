@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Frost Transport | 44T Full Breakdown Engine</title>
+    <title>Frost Transport | 44T Flexible Margin Engine</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -17,13 +17,16 @@
         .frost-input { height: 50px; border: 2px solid #e2e8f0; padding: 0 1rem; border-radius: 8px; width: 100%; font-size: 1rem; outline: none; }
         .label-text { font-size: 12px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 8px; display: block; }
         .btn-primary { background: var(--frost-red); color: white; font-weight: 900; text-transform: uppercase; padding: 1.25rem; border-radius: 8px; cursor: pointer; width: 100%; }
+        .sidebar-select { background: #1e293b; border: 1px solid #334155; color: white; padding: 5px; border-radius: 4px; font-size: 12px; font-weight: bold; }
     </style>
 </head>
 <body class="p-10">
 
-    <header class="max-w-[1200px] mx-auto mb-10 border-b-2 border-slate-200 pb-6">
-        <h1 class="text-4xl font-black italic tracking-tighter text-slate-900">FROST <span class="text-red-600">TRANSPORT</span></h1>
-        <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Detailed Time & Mileage Engine</p>
+    <header class="max-w-[1200px] mx-auto mb-10 border-b-2 border-slate-200 pb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-4xl font-black italic tracking-tighter text-slate-900">FROST <span class="text-red-600">TRANSPORT</span></h1>
+            <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Adjustable Margin Rate Engine</p>
+        </div>
     </header>
 
     <main class="max-w-[1200px] mx-auto grid grid-cols-12 gap-10">
@@ -36,18 +39,18 @@
                     <input type="text" id="delivery" class="frost-input uppercase font-bold" placeholder="DELIVERY POSTCODE" onchange="calculate()">
                 </div>
                 <div class="grid grid-cols-2 gap-6 mt-6">
-                    <div class="p-4 bg-slate-50 rounded-lg">
+                    <div class="p-4 bg-slate-50 rounded-lg text-center">
                         <span class="label-text">Google Distance</span>
                         <div id="mileDisplay" class="text-2xl font-black italic text-slate-900">0 mi</div>
                     </div>
-                    <div class="p-4 bg-slate-50 rounded-lg">
+                    <div class="p-4 bg-slate-50 rounded-lg text-center">
                         <span class="label-text">Google Drive Time</span>
                         <div id="driveTimeDisplay" class="text-2xl font-black italic text-slate-900">0h 0m</div>
                     </div>
                 </div>
                 <div class="mt-4">
                     <span class="label-text">Manual Mileage Adjustment</span>
-                    <input type="number" id="manualMiles" class="frost-input w-full" placeholder="Override miles if required" oninput="miles = parseFloat(this.value) || 0; update();">
+                    <input type="number" id="manualMiles" class="frost-input w-full" placeholder="Override miles" oninput="miles = parseFloat(this.value) || 0; update();">
                 </div>
             </section>
 
@@ -68,18 +71,28 @@
 
         <div class="col-span-5">
             <div class="bg-slate-900 text-white p-8 rounded-2xl shadow-2xl sticky top-10 border-b-8 border-red-600">
-                <h2 class="text-xl font-black italic uppercase text-red-500 mb-8">Detailed Breakdown</h2>
-
-                <div id="breakdown" class="space-y-4 mb-10">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-xl font-black italic uppercase text-red-500">Breakdown</h2>
+                    <div class="text-right">
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block mb-1">Set Margin</span>
+                        <select id="marginSelect" onchange="update()" class="sidebar-select">
+                            <option value="1.25" selected>25% Margin</option>
+                            <option value="1.20">20% Margin</option>
+                            <option value="1.15">15% Margin</option>
+                            <option value="1.10">10% Margin</option>
+                        </select>
                     </div>
-
-                <div class="border-t border-slate-700 pt-8">
-                    <span class="label-text text-slate-400">Total Quote (Ex VAT)</span>
-                    <div id="totalDisp" class="text-6xl font-black italic tracking-tighter text-white mt-2">£0.00</div>
-                    <p class="text-[10px] text-slate-500 mt-2 font-bold uppercase">Base Costs + 25% Margin</p>
                 </div>
 
-                <button class="btn-primary mt-10" onclick="alert('Confirmed')">Confirm Quote</button>
+                <div id="breakdown" class="space-y-4 mb-10 text-sm">
+                    </div>
+
+                <div class="border-t border-slate-700 pt-8 text-center">
+                    <span class="label-text text-slate-400">Total Quote (Ex VAT)</span>
+                    <div id="totalDisp" class="text-6xl font-black italic tracking-tighter text-white mt-2">£0.00</div>
+                </div>
+
+                <button class="btn-primary mt-10">Confirm Booking</button>
             </div>
         </div>
     </main>
@@ -88,9 +101,7 @@
         const RATE_STAND_HOUR = 39.20;
         const RATE_DRIVER_HOUR = 22.04;
         const RATE_FUEL_MILE   = 0.71; 
-        const PROFIT_MARGIN    = 1.25;
-
-        const HOURLY_TOTAL = RATE_STAND_HOUR + RATE_DRIVER_HOUR; // £61.24 combined
+        const HOURLY_TOTAL = RATE_STAND_HOUR + RATE_DRIVER_HOUR; // £61.24
 
         let miles = 0;
         let driveMinutes = 0;
@@ -124,6 +135,8 @@
         function update() {
             const lTime = parseFloat(document.getElementById('loadHrs').value) || 0;
             const tTime = parseFloat(document.getElementById('tipHrs').value) || 0;
+            const currentMarginMultiplier = parseFloat(document.getElementById('marginSelect').value);
+            
             const onSiteTime = lTime + tTime;
             const driveHrs = driveMinutes / 60;
 
@@ -132,20 +145,21 @@
             const fuelCost = miles * RATE_FUEL_MILE;
 
             const netTotal = driveCost + onSiteCost + fuelCost;
-            const finalTotal = netTotal * PROFIT_MARGIN;
+            const finalTotal = netTotal * currentMarginMultiplier;
+            const profitAmount = finalTotal - netTotal;
 
             const items = [
-                { label: `Driving Time (${driveHrs.toFixed(2)}h)`, val: driveCost },
+                { label: `Drive Time (${driveHrs.toFixed(2)}h)`, val: driveCost },
                 { label: `On-Site Time (${onSiteTime.toFixed(2)}h)`, val: onSiteCost },
-                { label: `Mileage Fuel (${miles}mi @ £0.71)`, val: fuelCost },
-                { label: "Net Operational Cost", val: netTotal, highlight: true },
-                { label: "Margin (25%)", val: (finalTotal - netTotal) }
+                { label: `Fuel Cost (${miles}mi @ £0.71)`, val: fuelCost },
+                { label: "Net Total (Costs)", val: netTotal, highlight: true },
+                { label: `Profit Margin (${((currentMarginMultiplier - 1) * 100).toFixed(0)}%)`, val: profitAmount }
             ];
 
             document.getElementById('breakdown').innerHTML = items.map(i => `
                 <div class="flex justify-between items-center border-b border-slate-800 pb-2">
                     <span class="text-[10px] font-bold ${i.highlight ? 'text-white' : 'text-slate-500'} uppercase">${i.label}</span>
-                    <span class="font-mono text-sm ${i.highlight ? 'text-red-500 font-black' : 'text-slate-200'}">£${i.val.toFixed(2)}</span>
+                    <span class="font-mono ${i.highlight ? 'text-red-500 font-black' : 'text-slate-200'}">£${i.val.toFixed(2)}</span>
                 </div>
             `).join('');
 
