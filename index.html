@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Frost Transport | HGV Dashboard v6.1</title>
+    <title>Frost Transport | HGV Dashboard v6.2</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -12,28 +12,24 @@
     <style>
         :root { --frost-red: #c32026; --frost-dark-navy: #0f172a; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background-image: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), url('Pic-35-1.jpg'); background-size: cover; background-position: center; background-attachment: fixed; min-height: 100vh; }
-        
         .frost-card { background: white; border-radius: 10px; border: 1px solid rgba(0,0,0,0.1); overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         .card-header-bar { height: 6px; background: var(--frost-dark-navy); width: 100%; }
         .card-content { padding: 1.25rem; }
-        
         .frost-input { border: 2px solid #e2e8f0; background: #fff; padding: 0.35rem 0.75rem; border-radius: 6px; width: 100%; font-size: 0.85rem; outline: none; }
         .frost-input:focus { border-color: var(--frost-red); }
         .frost-input:disabled { background: #f8fafc; color: #0f172a; cursor: not-allowed; border-color: #f1f5f9; }
         .manual-active { border: 2px solid var(--frost-red) !important; background: #fff5f5 !important; }
-
-        .section-header-red { font-size: 14px; font-weight: 900; color: var(--frost-red); text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px; font-style: italic; }
+        .section-header-red { font-size: 14px; font-weight: 900; color: var(--frost-red); text-transform: uppercase; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px; font-style: italic; }
         .label-text { font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; display: block; letter-spacing: 0.05em; }
-
         .sidebar-container { background: var(--frost-dark-navy); color: white; border-radius: 20px; border-bottom: 8px solid var(--frost-red); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         .custom-slider { -webkit-appearance: none; width: 100%; height: 6px; background: #334155; border-radius: 5px; outline: none; margin: 10px 0; }
         .custom-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; background: var(--frost-red); border-radius: 50%; border: 2px solid white; cursor: pointer; }
-
         .check-item { display: flex; align-items: center; padding: 6px 10px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; margin-bottom: 4px; background: #fff; }
         .check-item input { width: 14px; height: 14px; margin-right: 10px; accent-color: var(--frost-red); }
-        
         .btn-primary { background: var(--frost-red); color: white; font-weight: 900; text-transform: uppercase; padding: 1rem; border-radius: 8px; cursor: pointer; width: 100%; }
-        @media print { .no-print { display: none; } body { background: white; } .sidebar-container { background: white; color: black; border: 1px solid #eee; } }
+        .btn-clear { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; cursor: pointer; transition: color 0.2s; }
+        .btn-clear:hover { color: var(--frost-red); }
+        @media print { .no-print { display: none; } body { background: white; } }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -43,7 +39,7 @@
         <img src="logo.png" alt="Frost Transport" style="max-height: 70px;">
         <div class="text-right">
             <h2 class="text-[10px] font-black uppercase tracking-widest text-slate-500">Rate Calculation Engine</h2>
-            <p class="text-xs font-bold text-red-600 italic">v6.1 Multi-Drop Update</p>
+            <p class="text-xs font-bold text-red-600 italic">v6.2 Stability Build</p>
         </div>
     </header>
 
@@ -53,7 +49,7 @@
             <section class="frost-card">
                 <div class="card-header-bar"></div>
                 <div class="card-content">
-                    <h3 class="section-header-red">00. Customer Details</h3>
+                    <h3 class="section-header-red mb-4">00. Customer Details</h3>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div><span class="label-text">Contact Name</span><input type="text" class="frost-input" placeholder="Name"></div>
                         <div><span class="label-text">Company Name</span><input type="text" class="frost-input" placeholder="Company"></div>
@@ -65,7 +61,10 @@
             <section class="frost-card">
                 <div class="card-header-bar"></div>
                 <div class="card-content">
-                    <h3 class="section-header-red">01. Journey Logistics</h3>
+                    <div class="flex justify-between items-center mb-4 border-bottom border-slate-100 pb-1">
+                        <h3 class="section-header-red" style="border:none; margin:0; padding:0;">01. Journey Logistics</h3>
+                        <button onclick="clearJourney()" class="btn-clear no-print"><i class="fas fa-trash-can mr-1"></i> Clear Journey</button>
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div><span class="label-text">Collection Point</span><input type="text" id="pickup" class="frost-input uppercase font-bold" placeholder="E.G. NG24" onchange="calculate()"></div>
                         <div><span class="label-text">Final Delivery Point</span><input type="text" id="delivery" class="frost-input uppercase font-bold" placeholder="E.G. W1A" onchange="calculate()"></div>
@@ -88,7 +87,7 @@
             <section class="frost-card">
                 <div class="card-header-bar"></div>
                 <div class="card-content">
-                    <h3 class="section-header-red">02. Requirements</h3>
+                    <h3 class="section-header-red mb-4">02. Requirements</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="grid grid-cols-2 gap-3">
                             <div><span class="label-text">Load Time (Hrs)</span><input type="number" id="loadHrs" value="1" step="0.5" class="frost-input text-center" oninput="update()"></div>
@@ -116,9 +115,7 @@
                         <input type="range" id="fuelSlider" min="1.00" max="2.00" step="0.01" value="1.25" class="custom-slider" oninput="update()">
                     </div>
                 </div>
-
                 <div id="breakdown" class="space-y-3 mb-10 text-xs font-mono text-slate-400"></div>
-
                 <div class="text-center pt-4 border-t border-slate-800">
                     <span class="label-text text-slate-400">Grand Total (Ex VAT)</span>
                     <div id="totalDisp" class="text-6xl font-black italic text-white">£0.00</div>
@@ -133,6 +130,15 @@
     const HOURLY_TOTAL = 61.241826; 
     const MPG = 8;
     const LTR_GAL = 4.546;
+
+    function clearJourney() {
+        document.getElementById('pickup').value = '';
+        document.getElementById('delivery').value = '';
+        document.getElementById('waypoints').value = '';
+        document.getElementById('mileInput').value = 0;
+        document.getElementById('timeInput').value = '0.00';
+        update();
+    }
 
     function toggleMultiDrop() {
         const isM = document.getElementById('multiDropCheck').checked;
@@ -154,7 +160,6 @@
         const p = document.getElementById('pickup').value;
         const d = document.getElementById('delivery').value;
         if (p.length < 3 || d.length < 3) return;
-
         const isMulti = document.getElementById('multiDropCheck').checked;
         if (isMulti) {
             const ds = new google.maps.DirectionsService();
@@ -189,39 +194,32 @@
         const ppl = parseFloat(document.getElementById('fuelSlider').value);
         document.getElementById('marginVal').innerText = margin + '%';
         document.getElementById('fuelVal').innerText = '£' + ppl.toFixed(2);
-
         const miles = parseFloat(document.getElementById('mileInput').value) || 0;
         const driveHrs = parseFloat(document.getElementById('timeInput').value) || 0;
         const totalHrs = driveHrs + parseFloat(document.getElementById('loadHrs').value || 0) + parseFloat(document.getElementById('tipHrs').value || 0);
-        
         const costTime = totalHrs * HOURLY_TOTAL;
         const costFuel = (miles / MPG) * LTR_GAL * ppl;
-        
         let extras = 0;
         if(document.getElementById('checkTailLift').checked) extras += 50;
         if(document.getElementById('checkPre10').checked) extras += 25;
         if(document.getElementById('checkParking').checked) extras += 50;
-
-        // MULTI-DROP AUTO SURCHARGE
         let dropCount = 0;
         if(document.getElementById('multiDropCheck').checked) {
             const waypointsVal = document.getElementById('waypoints').value.split('\n');
             waypointsVal.forEach(line => { if(line.trim().length > 2) dropCount++; });
             extras += (dropCount * 50);
         }
-
         const rawSub = costTime + costFuel + extras;
         const quote = Math.ceil(((rawSub * (1 + (margin/100))) - 0.01) / 10) * 10;
-
         document.getElementById('breakdown').innerHTML = `
             <div class="flex justify-between"><span>TIME (${totalHrs.toFixed(2)} Hrs)</span><span>£${costTime.toFixed(2)}</span></div>
             <div class="flex justify-between"><span>FUEL (${miles} Mi)</span><span>£${costFuel.toFixed(2)}</span></div>
             ${dropCount > 0 ? `<div class="flex justify-between text-red-400 font-bold"><span>DROP CHARGE (${dropCount})</span><span>£${(dropCount * 50).toFixed(2)}</span></div>` : ''}
             ${(extras - (dropCount * 50)) > 0 ? `<div class="flex justify-between"><span>OTHER SURCHARGES</span><span>£${(extras - (dropCount * 50)).toFixed(2)}</span></div>` : ''}
         `;
-        document.getElementById('totalDisp').innerText = '£' + quote.toFixed(2);
+        document.getElementById('totalDisp').innerText = '£' + (quote || 0).toFixed(2);
     }
+    update();
 </script>
-
 </body>
 </html>
