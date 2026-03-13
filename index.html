@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Frost Transport | HGV Dashboard v6.0</title>
+    <title>Frost Transport | HGV Dashboard v6.1</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -43,7 +43,7 @@
         <img src="logo.png" alt="Frost Transport" style="max-height: 70px;">
         <div class="text-right">
             <h2 class="text-[10px] font-black uppercase tracking-widest text-slate-500">Rate Calculation Engine</h2>
-            <p class="text-xs font-bold text-red-600 italic">v6.0 Restored Build</p>
+            <p class="text-xs font-bold text-red-600 italic">v6.1 Multi-Drop Update</p>
         </div>
     </header>
 
@@ -71,8 +71,8 @@
                         <div><span class="label-text">Final Delivery Point</span><input type="text" id="delivery" class="frost-input uppercase font-bold" placeholder="E.G. W1A" onchange="calculate()"></div>
                     </div>
                     <div id="waypointContainer" style="display: none;" class="mb-4">
-                        <span class="label-text text-red-600 font-black">Intermediate Drops</span>
-                        <textarea id="waypoints" class="frost-input uppercase text-xs" rows="2" placeholder="One per line" onchange="calculate()"></textarea>
+                        <span class="label-text text-red-600 font-black italic">Intermediate Drops (Adds £50 per line)</span>
+                        <textarea id="waypoints" class="frost-input uppercase text-xs font-bold" rows="3" placeholder="Enter one postcode per line" oninput="update()" onchange="calculate()"></textarea>
                     </div>
                     <div class="flex gap-6 mb-6">
                         <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="multiDropCheck" class="accent-red-600" onchange="toggleMultiDrop()"><span class="label-text" style="margin:0">Multi-Drop Route</span></label>
@@ -137,6 +137,7 @@
     function toggleMultiDrop() {
         const isM = document.getElementById('multiDropCheck').checked;
         document.getElementById('waypointContainer').style.display = isM ? 'block' : 'none';
+        update(); 
         calculate();
     }
 
@@ -201,15 +202,22 @@
         if(document.getElementById('checkPre10').checked) extras += 25;
         if(document.getElementById('checkParking').checked) extras += 50;
 
-        // Subtotal before margin
+        // MULTI-DROP AUTO SURCHARGE
+        let dropCount = 0;
+        if(document.getElementById('multiDropCheck').checked) {
+            const waypointsVal = document.getElementById('waypoints').value.split('\n');
+            waypointsVal.forEach(line => { if(line.trim().length > 2) dropCount++; });
+            extras += (dropCount * 50);
+        }
+
         const rawSub = costTime + costFuel + extras;
-        // Apply margin and round UP to nearest £10 (using a tiny offset to prevent jump on exact numbers)
         const quote = Math.ceil(((rawSub * (1 + (margin/100))) - 0.01) / 10) * 10;
 
         document.getElementById('breakdown').innerHTML = `
             <div class="flex justify-between"><span>TIME (${totalHrs.toFixed(2)} Hrs)</span><span>£${costTime.toFixed(2)}</span></div>
             <div class="flex justify-between"><span>FUEL (${miles} Mi)</span><span>£${costFuel.toFixed(2)}</span></div>
-            ${extras > 0 ? `<div class="flex justify-between"><span>EXTRAS</span><span>£${extras.toFixed(2)}</span></div>` : ''}
+            ${dropCount > 0 ? `<div class="flex justify-between text-red-400 font-bold"><span>DROP CHARGE (${dropCount})</span><span>£${(dropCount * 50).toFixed(2)}</span></div>` : ''}
+            ${(extras - (dropCount * 50)) > 0 ? `<div class="flex justify-between"><span>OTHER SURCHARGES</span><span>£${(extras - (dropCount * 50)).toFixed(2)}</span></div>` : ''}
         `;
         document.getElementById('totalDisp').innerText = '£' + quote.toFixed(2);
     }
