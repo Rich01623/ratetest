@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Frost Transport | HGV Dashboard v4.5</title>
+    <title>Frost Transport | HGV Dashboard v4.6</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -82,7 +82,7 @@
         <img src="logo.png" alt="Frost Transport Solutions LTD" class="logo-img">
         <div class="text-right pb-2 text-slate-900">
             <h2 class="text-[10px] font-black uppercase tracking-widest opacity-60">Rate Engine</h2>
-            <p class="text-xs font-bold text-red-600 italic">44T Decimal v4.5</p>
+            <p class="text-xs font-bold text-red-600 italic">44T Decimal v4.6</p>
         </div>
     </header>
 
@@ -198,7 +198,10 @@
                 }, (response, status) => {
                     if (status === 'OK' && response.rows[0].elements[0].status === 'OK') {
                         const data = response.rows[0].elements[0];
-                        miles = Math.round((data.distance.value * 0.000621371) * 1.05);
+                        // Convert meters to miles, apply 5% once, and round UP
+                        const rawMiles = data.distance.value * 0.000621371;
+                        miles = Math.ceil(rawMiles * 1.05); 
+                        
                         rawGoogleMinutes = Math.round(data.duration.value / 60);
                         update();
                     }
@@ -218,7 +221,6 @@
             const driveHrsDecimal = parseFloat(((rawGoogleMinutes / 60) * TRUCK_TIME_MULTIPLIER).toFixed(2));
             const totalDecimalHours = parseFloat((driveHrsDecimal + lTime + tTime).toFixed(2));
             
-            // UI DISPLAY: Only show the Transit part in Section 01
             document.getElementById('driveTimeDisplay').innerText = driveHrsDecimal.toFixed(2);
             document.getElementById('mileDisplay').innerText = miles + " mi";
 
