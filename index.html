@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Frost Transport | 44T Dynamic Cost Engine</title>
+    <title>Frost Transport | 44T HGV Engine v3.1</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -28,7 +28,7 @@
     <header class="max-w-[1200px] mx-auto mb-10 border-b-2 border-slate-200 pb-6 flex justify-between items-end">
         <div>
             <h1 class="text-4xl font-black italic tracking-tighter text-slate-900">FROST <span class="text-red-600">TRANSPORT</span></h1>
-            <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">HGV Cost-Plus Engine v3.0</p>
+            <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">HGV Cost-Plus Engine (Truck Speed Adjusted)</p>
         </div>
         <div class="text-right font-black text-red-600 italic">44T ARTIC OPERATIONS</div>
     </header>
@@ -44,11 +44,11 @@
                 </div>
                 <div class="grid grid-cols-2 gap-6 mt-6">
                     <div class="p-4 bg-slate-50 rounded-lg text-center">
-                        <span class="label-text">Google Distance</span>
+                        <span class="label-text">Google Distance (+5%)</span>
                         <div id="mileDisplay" class="text-2xl font-black italic text-slate-900">0 mi</div>
                     </div>
                     <div class="p-4 bg-slate-50 rounded-lg text-center">
-                        <span class="label-text">Google Drive Time</span>
+                        <span class="label-text">Est. Truck Drive Time (+25%)</span>
                         <div id="driveTimeDisplay" class="text-2xl font-black italic text-slate-900">0h 0m</div>
                     </div>
                 </div>
@@ -107,19 +107,21 @@
                     <div id="totalDisp" class="text-6xl font-black italic tracking-tighter text-white mt-2">£0.00</div>
                 </div>
 
-                <button class="btn-primary mt-10" onclick="alert('Quote Logged')">Finalize Quote</button>
+                <button class="btn-primary mt-10">Confirm Booking</button>
             </div>
         </div>
     </main>
 
     <script>
-        // HOURLY RATES ARE FIXED
         const RATE_STAND_HOUR = 39.20;
         const RATE_DRIVER_HOUR = 22.04;
         const HOURLY_TOTAL = RATE_STAND_HOUR + RATE_DRIVER_HOUR; // £61.24
+        
+        // TRUCK SPEED ADJUSTMENT FACTOR
+        const TRUCK_TIME_MULTIPLIER = 1.25; 
 
+        let rawGoogleMinutes = 0;
         let miles = 0;
-        let driveMinutes = 0;
 
         function calculate() {
             const p = document.getElementById('pickup').value;
@@ -135,12 +137,19 @@
                 }, (response, status) => {
                     if (status === 'OK' && response.rows[0].elements[0].status === 'OK') {
                         const data = response.rows[0].elements[0];
-                        miles = Math.round((data.distance.value * 0.000621371) * 1.05);
-                        driveMinutes = Math.round(data.duration.value / 60);
                         
+                        // 1. Miles + 5% for HGV routing
+                        miles = Math.round((data.distance.value * 0.000621371) * 1.05);
+                        
+                        // 2. Drive Time + 25% for Truck Speed
+                        rawGoogleMinutes = Math.round(data.duration.value / 60);
+                        const adjustedMinutes = Math.round(rawGoogleMinutes * TRUCK_TIME_MULTIPLIER);
+                        
+                        // 3. Update Displays
                         document.getElementById('mileDisplay').innerText = miles + " mi";
-                        document.getElementById('driveTimeDisplay').innerText = Math.floor(driveMinutes/60) + "h " + (driveMinutes%60) + "m";
+                        document.getElementById('driveTimeDisplay').innerText = Math.floor(adjustedMinutes/60) + "h " + (adjustedMinutes%60) + "m";
                         document.getElementById('manualMiles').value = miles;
+                        
                         update();
                     }
                 });
@@ -148,24 +157,25 @@
         }
 
         function update() {
-            // Get slider and dropdown values
             const fuelRate = parseFloat(document.getElementById('fuelSlider').value);
             const marginMultiplier = parseFloat(document.getElementById('marginSelect').value);
-            
-            // Update the text display for the fuel slider
             document.getElementById('fuelValDisplay').innerText = '£' + fuelRate.toFixed(2);
 
             const lTime = parseFloat(document.getElementById('loadHrs').value) || 0;
             const tTime = parseFloat(document.getElementById('tipHrs').value) || 0;
-            const driveHrs = driveMinutes / 60;
+            
+            // Calculate adjusted drive hours
+            const driveHrs = (rawGoogleMinutes * TRUCK_TIME_MULTIPLIER) / 60;
+            const totalBillableHours = driveHrs + lTime + tTime;
 
-            const timeCost = (driveHrs + lTime + tTime) * HOURLY_TOTAL;
+            const timeCost = totalBillableHours * HOURLY_TOTAL;
             const fuelCost = miles * fuelRate;
             const netTotal = timeCost + fuelCost;
             const finalTotal = netTotal * marginMultiplier;
 
             const items = [
-                { label: `Combined Time (${(driveHrs + lTime + tTime).toFixed(2)}h)`, val: timeCost },
+                { label: `Adjusted Drive (${(driveHrs).toFixed(2)}h)`, val: driveHrs * HOURLY_TOTAL },
+                { label: `Site Windows (${(lTime + tTime).toFixed(2)}h)`, val: (lTime + tTime) * HOURLY_TOTAL },
                 { label: `Fuel Cost (${miles}mi @ £${fuelRate.toFixed(2)})`, val: fuelCost },
                 { label: "Net Operational Cost", val: netTotal, highlight: true },
                 { label: `Profit Margin (${((marginMultiplier-1)*100).toFixed(0)}%)`, val: (finalTotal - netTotal) }
