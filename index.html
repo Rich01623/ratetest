@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Frost Transport | HGV Dashboard v5.3</title>
+    <title>Frost Transport | HGV Dashboard v5.4</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -41,7 +41,7 @@
         <img src="logo.png" alt="Frost Transport" class="logo-img">
         <div class="text-right pb-2 text-slate-900">
             <h2 class="text-[10px] font-black uppercase tracking-widest opacity-60">Rate Engine</h2>
-            <p class="text-xs font-bold text-red-600 italic">Multi-Drop v5.3</p>
+            <p class="text-xs font-bold text-red-600 italic">Hybrid Engine v5.4</p>
         </div>
     </header>
 
@@ -175,6 +175,14 @@
         update();
     }
 
+    function applyAutoValues() {
+        if(!document.getElementById('manualMode').checked) {
+            document.getElementById('mileInput').value = autoMiles;
+            document.getElementById('timeInput').value = parseFloat(((autoMinutes / 60) * TRUCK_TIME_MULTIPLIER).toFixed(4));
+        }
+        update();
+    }
+
     function calculate() {
         const p = document.getElementById('pickup').value;
         const d = document.getElementById('delivery').value;
@@ -192,39 +200,52 @@
         }
 
         if (p.length > 2 && d.length > 2) {
-            // Using DirectionsService to support multiple waypoints natively
-            const directionsService = new google.maps.DirectionsService();
-            directionsService.route({
-                origin: p,
-                destination: d,
-                waypoints: waypts,
-                optimizeWaypoints: false, // Keeps stops in the exact order they type them
-                travelMode: 'DRIVING',
-                unitSystem: google.maps.UnitSystem.IMPERIAL
-            }, (response, status) => {
-                if (status === 'OK') {
-                    let totalMeters = 0;
-                    let totalSeconds = 0;
-                    const route = response.routes[0];
-                    
-                    // Sum up all the legs of the journey
-                    for (let i = 0; i < route.legs.length; i++) {
-                        totalMeters += route.legs[i].distance.value;
-                        totalSeconds += route.legs[i].duration.value;
-                    }
+            // IF MULTI-DROP AND HAS WAYPOINTS: Use the Directions API
+            if (waypts.length > 0) {
+                const directionsService = new google.maps.DirectionsService();
+                directionsService.route({
+                    origin: p,
+                    destination: d,
+                    waypoints: waypts,
+                    optimizeWaypoints: false, 
+                    travelMode: 'DRIVING',
+                    unitSystem: google.maps.UnitSystem.IMPERIAL
+                }, (response, status) => {
+                    if (status === 'OK') {
+                        let totalMeters = 0;
+                        let totalSeconds = 0;
+                        const route = response.routes[0];
+                        
+                        for (let i = 0; i < route.legs.length; i++) {
+                            totalMeters += route.legs[i].distance.value;
+                            totalSeconds += route.legs[i].duration.value;
+                        }
 
-                    autoMiles = Math.round((totalMeters * 0.000621371) * 1.05); 
-                    autoMinutes = Math.round(totalSeconds / 60);
-                    
-                    if(!document.getElementById('manualMode').checked) {
-                        document.getElementById('mileInput').value = autoMiles;
-                        document.getElementById('timeInput').value = parseFloat(((autoMinutes / 60) * TRUCK_TIME_MULTIPLIER).toFixed(4));
+                        autoMiles = Math.round((totalMeters * 0.000621371) * 1.05); 
+                        autoMinutes = Math.round(totalSeconds / 60);
+                        applyAutoValues();
+                    } else {
+                        alert("Google Maps Error: " + status + ".\nIf this says REQUEST_DENIED, you need to enable the 'Directions API' in your Google Cloud Console for multi-drop to work.");
                     }
-                    update();
-                } else {
-                    console.log('Directions request failed: ' + status);
-                }
-            });
+                });
+            } 
+            // IF STANDARD A-TO-B: Use the reliable Distance Matrix API
+            else {
+                const matrixService = new google.maps.DistanceMatrixService();
+                matrixService.getDistanceMatrix({
+                    origins: [p],
+                    destinations: [d],
+                    travelMode: 'DRIVING',
+                    unitSystem: google.maps.UnitSystem.IMPERIAL
+                }, (response, status) => {
+                    if (status === 'OK' && response.rows[0].elements[0].status === 'OK') {
+                        const data = response.rows[0].elements[0];
+                        autoMiles = Math.round((data.distance.value * 0.000621371) * 1.05); 
+                        autoMinutes = Math.round(data.duration.value / 60);
+                        applyAutoValues();
+                    }
+                });
+            }
         }
     }
 
