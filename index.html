@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Frost Transport | 44T HGV Engine v3.1</title>
+    <title>Frost Transport | HGV Dashboard v4.2</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -11,113 +11,176 @@
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDOPkYduNBvti4HWX2izIhCrrQ02uk5SL0&libraries=geometry,distance_matrix"></script>
     
     <style>
-        :root { --frost-red: #c32026; --frost-grey: #1e293b; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #f1f5f9; }
-        .frost-card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        .frost-input { height: 50px; border: 2px solid #e2e8f0; padding: 0 1rem; border-radius: 8px; width: 100%; font-size: 1rem; outline: none; }
-        .label-text { font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.025em;}
-        .btn-primary { background: var(--frost-red); color: white; font-weight: 900; text-transform: uppercase; padding: 1.25rem; border-radius: 8px; cursor: pointer; width: 100%; }
+        :root { --frost-red: #c32026; --frost-dark-navy: #0f172a; }
+
+        body { 
+            margin: 0; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)),
+                url('Pic-35-1.jpg'); 
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        .page-overlay {
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
         
-        /* Slider Styling */
-        .fuel-slider { -webkit-appearance: none; width: 100%; height: 8px; background: #334155; border-radius: 5px; outline: none; }
-        .fuel-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; background: #c32026; cursor: pointer; border-radius: 50%; border: 2px solid white; }
+        .frost-card { 
+            background: white; 
+            border-radius: 10px; 
+            border: 1px solid rgba(0,0,0,0.1); 
+            overflow: hidden; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); 
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .card-header-bar { height: 6px; background: var(--frost-dark-navy); width: 100%; flex-shrink: 0; }
+        .card-content { padding: 0.85rem 1.25rem; flex-grow: 1; }
+        .compact-grid { gap: 0.5rem 1rem; }
+
+        .frost-input { height: 36px; border: 2px solid #e2e8f0; background: #fff; padding: 0 0.75rem; border-radius: 6px; width: 100%; font-size: 0.85rem; outline: none; }
+        .frost-input:focus { border-color: var(--frost-red); }
+        
+        .section-header-red { 
+            font-size: 13px;
+            font-weight: 900; 
+            color: var(--frost-red); 
+            text-transform: uppercase; 
+            margin-bottom: 6px; 
+            display: block; 
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 3px;
+            font-style: italic;
+        }
+
+        .label-text { font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; display: block; letter-spacing: 0.05em;}
+        .btn-primary { background: var(--frost-red); color: white; font-weight: 900; text-transform: uppercase; padding: 1rem; border-radius: 8px; cursor: pointer; width: 100%; }
+        
+        .sidebar-container { background: var(--frost-dark-navy); color: white; border-radius: 20px; border-bottom: 8px solid var(--frost-red); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .fuel-slider { -webkit-appearance: none; width: 100%; height: 6px; background: #334155; border-radius: 5px; outline: none; }
+        .fuel-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; background: var(--frost-red); border-radius: 50%; border: 2px solid white; }
+        
+        .check-item { display: flex; align-items: center; padding: 5px 10px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; margin-bottom: 4px; background: #fff; }
+        .check-item input { width: 14px; height: 14px; margin-right: 10px; accent-color: var(--frost-red); }
+        .check-label { font-size: 11px; font-weight: 700; color: #1e293b; flex-grow: 1; }
+        .check-price { font-size: 11px; font-weight: 800; color: var(--frost-red); }
+
+        .logo-img { max-height: 80px; width: auto; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
     </style>
 </head>
-<body class="p-10">
+<body>
 
-    <header class="max-w-[1200px] mx-auto mb-10 border-b-2 border-slate-200 pb-6 flex justify-between items-end">
-        <div>
-            <h1 class="text-4xl font-black italic tracking-tighter text-slate-900">FROST <span class="text-red-600">TRANSPORT</span></h1>
-            <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">HGV Cost-Plus Engine (Truck Speed Adjusted)</p>
+<div class="page-overlay">
+    <header class="max-w-[1300px] mx-auto mb-6 flex justify-between items-end">
+        <img src="logo.png" alt="Frost Transport Solutions LTD" class="logo-img">
+        <div class="text-right pb-2 text-slate-900">
+            <h2 class="text-[10px] font-black uppercase tracking-widest opacity-60">Rate Engine</h2>
+            <p class="text-xs font-bold text-red-600 italic">44T Cost-Plus v4.2</p>
         </div>
-        <div class="text-right font-black text-red-600 italic">44T ARTIC OPERATIONS</div>
     </header>
 
-    <main class="max-w-[1200px] mx-auto grid grid-cols-12 gap-10">
+    <main class="max-w-[1300px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        <div class="col-span-7 space-y-8">
+        <div class="lg:col-span-8 space-y-6">
             <section class="frost-card">
-                <h3 class="label-text text-red-600 text-lg mb-6 underline decoration-2">01. Journey Metrics</h3>
-                <div class="grid grid-cols-2 gap-6">
-                    <input type="text" id="pickup" class="frost-input uppercase font-bold" placeholder="COLLECTION POSTCODE" onchange="calculate()">
-                    <input type="text" id="delivery" class="frost-input uppercase font-bold" placeholder="DELIVERY POSTCODE" onchange="calculate()">
-                </div>
-                <div class="grid grid-cols-2 gap-6 mt-6">
-                    <div class="p-4 bg-slate-50 rounded-lg text-center">
-                        <span class="label-text">Google Distance (+5%)</span>
-                        <div id="mileDisplay" class="text-2xl font-black italic text-slate-900">0 mi</div>
+                <div class="card-header-bar"></div>
+                <div class="card-content">
+                    <h3 class="section-header-red">00. Customer Details</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 compact-grid">
+                        <div><span class="label-text">Contact Name</span><input type="text" class="frost-input" placeholder="Name"></div>
+                        <div><span class="label-text">Company Name</span><input type="text" class="frost-input" placeholder="Company"></div>
+                        <div><span class="label-text">Company Postcode</span><input type="text" class="frost-input uppercase" placeholder="Postcode"></div>
+                        <div><span class="label-text">Phone Number</span><input type="tel" class="frost-input" placeholder="Number"></div>
+                        <div class="md:col-span-2"><span class="label-text">Email Address</span><input type="email" class="frost-input" placeholder="Email"></div>
                     </div>
-                    <div class="p-4 bg-slate-50 rounded-lg text-center">
-                        <span class="label-text">Est. Truck Drive Time (+25%)</span>
-                        <div id="driveTimeDisplay" class="text-2xl font-black italic text-slate-900">0h 0m</div>
-                    </div>
-                </div>
-                <div class="mt-4">
-                    <span class="label-text">Manual Mileage Adjustment</span>
-                    <input type="number" id="manualMiles" class="frost-input w-full" placeholder="Override miles" oninput="miles = parseFloat(this.value) || 0; update();">
                 </div>
             </section>
 
-            <section class="frost-card">
-                <h3 class="label-text text-red-600 text-lg mb-6 underline decoration-2">02. Site Windows</h3>
-                <div class="grid grid-cols-2 gap-6">
-                    <div>
-                        <span class="label-text">Loading (Hrs)</span>
-                        <input type="number" id="loadHrs" value="2" step="0.5" class="frost-input" oninput="update()">
-                    </div>
-                    <div>
-                        <span class="label-text">Tipping (Hrs)</span>
-                        <input type="number" id="tipHrs" value="2" step="0.5" class="frost-input" oninput="update()">
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        <div class="col-span-5">
-            <div class="bg-slate-900 text-white p-8 rounded-2xl shadow-2xl sticky top-10 border-b-8 border-red-600">
-                
-                <div class="space-y-6 mb-8 border-b border-slate-700 pb-8">
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="label-text text-slate-400">Profit Margin</span>
-                            <select id="marginSelect" onchange="update()" class="bg-slate-800 border border-slate-600 text-white text-xs p-1 rounded font-bold">
-                                <option value="1.25" selected>25%</option>
-                                <option value="1.20">20%</option>
-                                <option value="1.15">15%</option>
-                                <option value="1.10">10%</option>
-                            </select>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+                <section class="frost-card">
+                    <div class="card-header-bar"></div>
+                    <div class="card-content">
+                        <h3 class="section-header-red">01. Journey</h3>
+                        <div class="grid grid-cols-1 gap-2">
+                            <div><span class="label-text">Collection</span><input type="text" id="pickup" class="frost-input uppercase font-bold" placeholder="E.G. NG24" onchange="calculate()"></div>
+                            <div><span class="label-text">Delivery</span><input type="text" id="delivery" class="frost-input uppercase font-bold" placeholder="E.G. W1A" onchange="calculate()"></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 mt-3">
+                            <div class="p-2 bg-slate-50 border border-slate-100 rounded-lg text-center">
+                                <span class="label-text">Miles (+5%)</span>
+                                <div id="mileDisplay" class="text-lg font-black text-slate-900">0 mi</div>
+                            </div>
+                            <div class="p-2 bg-slate-50 border border-slate-100 rounded-lg text-center">
+                                <span class="label-text">Time (+25%)</span>
+                                <div id="driveTimeDisplay" class="text-lg font-black text-slate-900">0h 0m</div>
+                            </div>
                         </div>
                     </div>
+                </section>
 
+                <section class="frost-card">
+                    <div class="card-header-bar"></div>
+                    <div class="card-content">
+                        <h3 class="section-header-red">02. Requirements</h3>
+                        <div class="grid grid-cols-2 gap-3 mb-3">
+                            <div><span class="label-text">Load (Hrs)</span><input type="number" id="loadHrs" value="2" step="0.5" class="frost-input text-center" oninput="update()"></div>
+                            <div><span class="label-text">Tip (Hrs)</span><input type="number" id="tipHrs" value="2" step="0.5" class="frost-input text-center" oninput="update()"></div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="check-item"><input type="checkbox" id="checkTailLift" onchange="update()"><span class="check-label">Tail Lift</span><span class="check-price">+£50</span></label>
+                            <label class="check-item"><input type="checkbox" id="checkPre10" onchange="update()"><span class="check-label">Pre-10am</span><span class="check-price">+£25</span></label>
+                            <label class="check-item"><input type="checkbox" id="checkParking" onchange="update()"><span class="check-label">Parking</span><span class="check-price">+£50</span></label>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <div class="lg:col-span-4">
+            <div class="sidebar-container p-6">
+                <div class="space-y-4 mb-6 border-b border-slate-800 pb-6">
+                    <div class="flex justify-between items-center">
+                        <span class="label-text text-slate-400">Margin</span>
+                        <select id="marginSelect" onchange="update()" class="bg-slate-800 border border-slate-700 text-white text-xs p-1.5 rounded font-bold outline-none">
+                            <option value="1.25" selected>25%</option>
+                            <option value="1.20">20%</option>
+                            <option value="1.15">15%</option>
+                            <option value="1.10">10%</option>
+                        </select>
+                    </div>
                     <div>
                         <div class="flex justify-between items-center mb-2">
-                            <span class="label-text text-slate-400">Fuel Rate (Per Mile)</span>
+                            <span class="label-text text-slate-400">Fuel Rate</span>
                             <span id="fuelValDisplay" class="text-red-500 font-black italic text-sm">£0.71</span>
                         </div>
                         <input type="range" id="fuelSlider" min="0.50" max="1.50" step="0.01" value="0.71" class="fuel-slider" oninput="update()">
                     </div>
                 </div>
-
-                <div id="breakdown" class="space-y-4 mb-10 text-sm">
-                    <div class="text-slate-500 italic text-xs text-center py-4">Waiting for route data...</div>
+                <div id="breakdown" class="space-y-2 mb-8">
+                    <div class="text-slate-500 italic text-xs text-center py-4 uppercase">Waiting for data...</div>
                 </div>
-
-                <div class="border-t border-slate-700 pt-8 text-center">
+                <div class="border-t border-slate-800 pt-6 text-center">
                     <span class="label-text text-slate-400">Total Quote (Ex VAT)</span>
-                    <div id="totalDisp" class="text-6xl font-black italic tracking-tighter text-white mt-2">£0.00</div>
+                    <div id="totalDisp" class="text-6xl font-black italic tracking-tighter text-white mt-1">£0.00</div>
                 </div>
-
-                <button class="btn-primary mt-10">Confirm Booking</button>
+                <button class="btn-primary mt-8 text-sm" onclick="window.print()">Generate Quote</button>
             </div>
         </div>
     </main>
+</div>
 
     <script>
         const RATE_STAND_HOUR = 39.20;
         const RATE_DRIVER_HOUR = 22.04;
-        const HOURLY_TOTAL = RATE_STAND_HOUR + RATE_DRIVER_HOUR; // £61.24
-        
-        // TRUCK SPEED ADJUSTMENT FACTOR
+        const HOURLY_TOTAL = RATE_STAND_HOUR + RATE_DRIVER_HOUR;
         const TRUCK_TIME_MULTIPLIER = 1.25; 
 
         let rawGoogleMinutes = 0;
@@ -126,7 +189,6 @@
         function calculate() {
             const p = document.getElementById('pickup').value;
             const d = document.getElementById('delivery').value;
-
             if (p.length > 2 && d.length > 2) {
                 const service = new google.maps.DistanceMatrixService();
                 service.getDistanceMatrix({
@@ -137,19 +199,11 @@
                 }, (response, status) => {
                     if (status === 'OK' && response.rows[0].elements[0].status === 'OK') {
                         const data = response.rows[0].elements[0];
-                        
-                        // 1. Miles + 5% for HGV routing
                         miles = Math.round((data.distance.value * 0.000621371) * 1.05);
-                        
-                        // 2. Drive Time + 25% for Truck Speed
                         rawGoogleMinutes = Math.round(data.duration.value / 60);
-                        const adjustedMinutes = Math.round(rawGoogleMinutes * TRUCK_TIME_MULTIPLIER);
-                        
-                        // 3. Update Displays
+                        const adjMin = Math.round(rawGoogleMinutes * TRUCK_TIME_MULTIPLIER);
                         document.getElementById('mileDisplay').innerText = miles + " mi";
-                        document.getElementById('driveTimeDisplay').innerText = Math.floor(adjustedMinutes/60) + "h " + (adjustedMinutes%60) + "m";
-                        document.getElementById('manualMiles').value = miles;
-                        
+                        document.getElementById('driveTimeDisplay').innerText = Math.floor(adjMin/60) + "h " + (adjMin%60) + "m";
                         update();
                     }
                 });
@@ -158,36 +212,34 @@
 
         function update() {
             const fuelRate = parseFloat(document.getElementById('fuelSlider').value);
-            const marginMultiplier = parseFloat(document.getElementById('marginSelect').value);
+            const marginMult = parseFloat(document.getElementById('marginSelect').value);
             document.getElementById('fuelValDisplay').innerText = '£' + fuelRate.toFixed(2);
-
             const lTime = parseFloat(document.getElementById('loadHrs').value) || 0;
             const tTime = parseFloat(document.getElementById('tipHrs').value) || 0;
-            
-            // Calculate adjusted drive hours
             const driveHrs = (rawGoogleMinutes * TRUCK_TIME_MULTIPLIER) / 60;
-            const totalBillableHours = driveHrs + lTime + tTime;
-
-            const timeCost = totalBillableHours * HOURLY_TOTAL;
+            let extras = 0;
+            if(document.getElementById('checkTailLift').checked) extras += 50;
+            if(document.getElementById('checkPre10').checked) extras += 25;
+            if(document.getElementById('checkParking').checked) extras += 50;
+            const timeCost = (driveHrs + lTime + tTime) * HOURLY_TOTAL;
             const fuelCost = miles * fuelRate;
-            const netTotal = timeCost + fuelCost;
-            const finalTotal = netTotal * marginMultiplier;
+            const netTotal = timeCost + fuelCost + extras;
+            const finalTotal = netTotal * marginMult;
 
             const items = [
-                { label: `Adjusted Drive (${(driveHrs).toFixed(2)}h)`, val: driveHrs * HOURLY_TOTAL },
-                { label: `Site Windows (${(lTime + tTime).toFixed(2)}h)`, val: (lTime + tTime) * HOURLY_TOTAL },
-                { label: `Fuel Cost (${miles}mi @ £${fuelRate.toFixed(2)})`, val: fuelCost },
-                { label: "Net Operational Cost", val: netTotal, highlight: true },
-                { label: `Profit Margin (${((marginMultiplier-1)*100).toFixed(0)}%)`, val: (finalTotal - netTotal) }
+                { label: `HGV Time (${(driveHrs + lTime + tTime).toFixed(2)}h)`, val: timeCost },
+                { label: `Fuel (${miles}mi)`, val: fuelCost }
             ];
+            if(extras > 0) items.push({ label: "Surcharges", val: extras });
+            items.push({ label: "Net Costs", val: netTotal, highlight: true });
+            items.push({ label: `Profit Margin`, val: (finalTotal - netTotal) });
 
             document.getElementById('breakdown').innerHTML = items.map(i => `
-                <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-                    <span class="text-[10px] font-bold ${i.highlight ? 'text-white' : 'text-slate-500'} uppercase">${i.label}</span>
-                    <span class="font-mono text-sm ${i.highlight ? 'text-red-500 font-black' : 'text-slate-200'}">£${i.val.toFixed(2)}</span>
+                <div class="flex justify-between items-center border-b border-slate-800 pb-1">
+                    <span class="text-[9px] font-bold ${i.highlight ? 'text-white' : 'text-slate-500'} uppercase">${i.label}</span>
+                    <span class="font-mono text-xs ${i.highlight ? 'text-red-500 font-black' : 'text-slate-200'}">£${i.val.toFixed(2)}</span>
                 </div>
             `).join('');
-
             document.getElementById('totalDisp').innerText = '£' + finalTotal.toFixed(2);
         }
     </script>
