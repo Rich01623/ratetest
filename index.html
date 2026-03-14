@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Frost Transport | HGV Dashboard v6.6</title>
+    <title>Frost Transport | HGV Dashboard v6.7</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -12,30 +12,23 @@
     <style>
         :root { --frost-red: #c32026; --frost-dark-navy: #0f172a; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background-image: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), url('Pic-35-1.jpg'); background-size: cover; background-position: center; background-attachment: fixed; min-height: 100vh; }
-        
         .frost-card { background: white; border-radius: 10px; border: 1px solid rgba(0,0,0,0.1); overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         .card-header-bar { height: 6px; background: var(--frost-dark-navy); width: 100%; }
         .card-content { padding: 1.25rem; }
-        
         .frost-input { border: 2px solid #e2e8f0; background: #fff; padding: 0.35rem 0.75rem; border-radius: 6px; width: 100%; font-size: 0.85rem; outline: none; }
         .frost-input:focus { border-color: var(--frost-red); }
         .frost-input:disabled { background: #f8fafc; color: #0f172a; cursor: not-allowed; border-color: #f1f5f9; }
-        .manual-active { border: 2px solid var(--frost-red) !important; background: #fff5f5 !important; }
-
         .section-header-red { font-size: 14px; font-weight: 900; color: var(--frost-red); text-transform: uppercase; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px; font-style: italic; }
         .label-text { font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; display: block; letter-spacing: 0.05em; }
-
         .sidebar-container { background: var(--frost-dark-navy); color: white; border-radius: 20px; border-bottom: 8px solid var(--frost-red); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         .custom-slider { -webkit-appearance: none; width: 100%; height: 6px; background: #334155; border-radius: 5px; outline: none; margin: 10px 0; }
         .custom-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; background: var(--frost-red); border-radius: 50%; border: 2px solid white; cursor: pointer; }
-
         #map { width: 100%; height: 450px; border-radius: 12px; background: #242f3e; }
-        .map-wrapper { background: var(--frost-dark-navy); padding: 12px; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2); }
-        
+        .map-wrapper { background: var(--frost-dark-navy); padding: 12px; border-radius: 16px; }
         .btn-primary { background: var(--frost-red); color: white; font-weight: 900; text-transform: uppercase; padding: 1rem; border-radius: 8px; cursor: pointer; width: 100%; }
         .btn-clear { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; cursor: pointer; }
-        
-        @media print { .no-print { display: none; } #map { height: 450px; } .map-wrapper { background: white; padding: 0; } body { background: white; } }
+        .opti-badge { background: #10b981; color: white; font-size: 8px; padding: 1px 4px; border-radius: 4px; margin-left: 4px; vertical-align: middle; display: none; }
+        @media print { .no-print { display: none; } body { background: white; } }
     </style>
 </head>
 <body class="p-4 md:p-8 pb-12">
@@ -45,7 +38,7 @@
         <img src="logo.png" alt="Frost Transport" style="max-height: 70px;">
         <div class="text-right">
             <h2 class="text-[10px] font-black uppercase tracking-widest text-slate-500">Rate Calculation Engine</h2>
-            <p class="text-xs font-bold text-red-600 italic">v6.6 Interactive Map</p>
+            <p class="text-xs font-bold text-red-600 italic">v6.7 Smart Optimization</p>
         </div>
     </header>
 
@@ -81,8 +74,9 @@
                         <textarea id="waypoints" class="frost-input uppercase text-xs font-bold" rows="2" placeholder="One postcode per line" oninput="update()" onchange="calculate()"></textarea>
                     </div>
 
-                    <div class="flex gap-6 mb-6">
+                    <div class="flex flex-wrap gap-6 mb-6 no-print">
                         <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="multiDropCheck" class="accent-red-600" onchange="toggleMultiDrop()"><span class="label-text" style="margin:0">Multi-Drop Route</span></label>
+                        <label id="optiContainer" class="flex items-center gap-2 cursor-pointer opacity-40 transition-opacity"><input type="checkbox" id="optimizeCheck" class="accent-green-600" onchange="calculate()" disabled><span class="label-text" style="margin:0">Route Optimisation</span><span id="optiBadge" class="opti-badge">ON</span></label>
                         <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="manualMode" class="accent-red-600" onchange="toggleManual()"><span class="label-text" style="margin:0">Manual Overrides</span></label>
                     </div>
 
@@ -103,9 +97,9 @@
                             <div><span class="label-text">Tip Time (Hrs)</span><input type="number" id="tipHrs" value="1" step="0.5" class="frost-input text-center" oninput="update()"></div>
                         </div>
                         <div class="space-y-1">
-                            <label class="check-item"><input type="checkbox" id="checkTailLift" onchange="update()"><span class="flex-grow text-[11px] font-bold">Tail Lift Required</span><span class="text-red-600 font-black text-[11px]">£50</span></label>
-                            <label class="check-item"><input type="checkbox" id="checkPre10" onchange="update()"><span class="flex-grow text-[11px] font-bold">Pre-10am Delivery</span><span class="text-red-600 font-black text-[11px]">£25</span></label>
-                            <label class="check-item"><input type="checkbox" id="checkParking" onchange="update()"><span class="flex-grow text-[11px] font-bold">Parking & Tolls</span><span class="text-red-600 font-black text-[11px]">£50</span></label>
+                            <label class="check-item flex items-center p-2 border rounded hover:bg-slate-50 cursor-pointer"><input type="checkbox" id="checkTailLift" onchange="update()" class="mr-2"><span class="flex-grow text-[11px] font-bold">Tail Lift Required</span><span class="text-red-600 font-black text-[11px]">£50</span></label>
+                            <label class="check-item flex items-center p-2 border rounded hover:bg-slate-50 cursor-pointer"><input type="checkbox" id="checkPre10" onchange="update()" class="mr-2"><span class="flex-grow text-[11px] font-bold">Pre-10am Delivery</span><span class="text-red-600 font-black text-[11px]">£25</span></label>
+                            <label class="check-item flex items-center p-2 border rounded hover:bg-slate-50 cursor-pointer"><input type="checkbox" id="checkParking" onchange="update()" class="mr-2"><span class="flex-grow text-[11px] font-bold">Parking & Tolls</span><span class="text-red-600 font-black text-[11px]">£50</span></label>
                         </div>
                     </div>
                 </div>
@@ -124,21 +118,15 @@
                         <input type="range" id="fuelSlider" min="1.00" max="2.00" step="0.01" value="1.25" class="custom-slider" oninput="update()">
                     </div>
                 </div>
-
                 <div id="breakdown" class="space-y-3 mb-6 text-xs font-mono text-slate-400"></div>
-
-                <div class="pt-4 border-t border-slate-800 mb-6">
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="label-text text-slate-400" style="margin:0">Net Profit Estimate</span>
-                        <span id="profitDisp" class="text-green-500 font-black italic text-lg">£0.00</span>
-                    </div>
+                <div class="pt-4 border-t border-slate-800 mb-6 text-center">
+                    <span class="label-text text-slate-400">Net Profit Estimate</span>
+                    <div id="profitDisp" class="text-green-500 font-black italic text-lg">£0.00</div>
                 </div>
-
                 <div class="text-center">
                     <span class="label-text text-slate-400">Grand Total (Ex VAT)</span>
                     <div id="totalDisp" class="text-6xl font-black italic text-white">£0.00</div>
                 </div>
-                
                 <button class="btn-primary mt-8 no-print" onclick="window.print()">Print Rate Sheet</button>
             </div>
         </div>
@@ -146,7 +134,7 @@
 
     <div class="map-wrapper">
         <div id="map"></div>
-        <div class="p-2 text-center text-[10px] uppercase font-black text-slate-500 tracking-widest no-print">Use mouse scroll to zoom • Click buttons to change view</div>
+        <div class="p-2 text-center text-[10px] uppercase font-black text-slate-500 tracking-widest no-print">Frost Transport Live Route Engine • v6.7</div>
     </div>
 </div>
 
@@ -154,22 +142,9 @@
     const HOURLY_TOTAL = 61.241826; 
     const MPG = 8;
     const LTR_GAL = 4.546;
-
     let map, directionsRenderer, directionsService;
 
-    const darkModeStyle = [
-        { "elementType": "geometry", "stylers": [{ "color": "#242f3e" }] },
-        { "elementType": "labels.text.fill", "stylers": [{ "color": "#746855" }] },
-        { "elementType": "labels.text.stroke", "stylers": [{ "color": "#242f3e" }] },
-        { "featureType": "administrative.locality", "elementType": "labels.text.fill", "stylers": [{ "color": "#d59563" }] },
-        { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [{ "color": "#d59563" }] },
-        { "featureType": "poi.park", "elementType": "geometry", "stylers": [{ "color": "#263c3f" }] },
-        { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#38414e" }] },
-        { "featureType": "road", "elementType": "geometry.stroke", "stylers": [{ "color": "#212a37" }] },
-        { "featureType": "road.highway", "elementType": "geometry", "stylers": [{ "color": "#746855" }] },
-        { "featureType": "road.highway", "elementType": "geometry.stroke", "stylers": [{ "color": "#1f2835" }] },
-        { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#17263c" }] }
-    ];
+    const darkModeStyle = [{"elementType":"geometry","stylers":[{"color":"#242f3e"}]},{"elementType":"labels.text.fill","stylers":[{"color":"#746855"}]},{"elementType":"labels.text.stroke","stylers":[{"color":"#242f3e"}]},{"featureType":"administrative.locality","elementType":"labels.text.fill","stylers":[{"color":"#d59563"}]},{"featureType":"poi","elementType":"labels.text.fill","stylers":[{"color":"#d59563"}]},{"featureType":"poi.park","elementType":"geometry","stylers":[{"color":"#263c3f"}]},{"featureType":"road","elementType":"geometry","stylers":[{"color":"#38414e"}]},{"featureType":"road","elementType":"geometry.stroke","stylers":[{"color":"#212a37"}]},{"featureType":"road.highway","elementType":"geometry","stylers":[{"color":"#746855"}]},{"featureType":"road.highway","elementType":"geometry.stroke","stylers":[{"color":"#1f2835"}]},{"featureType":"water","elementType":"geometry","stylers":[{"color":"#17263c"}]}];
 
     function initMap() {
         directionsService = new google.maps.DirectionsService();
@@ -179,14 +154,7 @@
         map = new google.maps.Map(document.getElementById("map"), {
             zoom: 6,
             center: { lat: 52.355, lng: -1.174 },
-            disableDefaultUI: false, // ENABLED UI
-            zoomControl: true,
-            mapTypeControl: true,
-            scaleControl: true,
-            streetViewControl: false,
-            rotateControl: true,
-            fullscreenControl: true,
-            scrollwheel: true, // ENABLED SCROLL ZOOM
+            disableDefaultUI: false,
             styles: darkModeStyle
         });
         directionsRenderer.setMap(map);
@@ -205,6 +173,14 @@
     function toggleMultiDrop() {
         const isM = document.getElementById('multiDropCheck').checked;
         document.getElementById('waypointContainer').style.display = isM ? 'block' : 'none';
+        
+        // Handle Opti checkbox UI
+        const optiBox = document.getElementById('optimizeCheck');
+        const optiCont = document.getElementById('optiContainer');
+        optiBox.disabled = !isM;
+        if(!isM) optiBox.checked = false;
+        optiCont.classList.toggle('opacity-40', !isM);
+        
         update(); calculate();
     }
 
@@ -221,7 +197,12 @@
         if (p.length < 3 || d.length < 3) return;
 
         let wps = [];
-        if (document.getElementById('multiDropCheck').checked) {
+        const isMulti = document.getElementById('multiDropCheck').checked;
+        const shouldOptimize = document.getElementById('optimizeCheck').checked;
+        
+        document.getElementById('optiBadge').style.display = shouldOptimize ? 'inline-block' : 'none';
+
+        if (isMulti) {
             document.getElementById('waypoints').value.split('\n').forEach(l => { 
                 if(l.trim()) wps.push({location:l.trim(), stopover:true}); 
             });
@@ -231,6 +212,7 @@
             origin: p,
             destination: d,
             waypoints: wps,
+            optimizeWaypoints: shouldOptimize, // THE MAGIC BUTTON
             travelMode: 'DRIVING'
         }, (res, stat) => {
             if (stat === 'OK') {
@@ -252,42 +234,33 @@
         const ppl = parseFloat(document.getElementById('fuelSlider').value);
         document.getElementById('marginVal').innerText = margin + '%';
         document.getElementById('fuelVal').innerText = '£' + ppl.toFixed(2);
-
         const miles = parseFloat(document.getElementById('mileInput').value) || 0;
         const driveHrs = parseFloat(document.getElementById('timeInput').value) || 0;
         const totalHrs = driveHrs + parseFloat(document.getElementById('loadHrs').value || 0) + parseFloat(document.getElementById('tipHrs').value || 0);
-        
         const costTime = totalHrs * HOURLY_TOTAL;
         const costFuel = (miles / MPG) * LTR_GAL * ppl;
-        
         let extras = 0;
         let dropCount = 0;
         if(document.getElementById('checkTailLift').checked) extras += 50;
         if(document.getElementById('checkPre10').checked) extras += 25;
         if(document.getElementById('checkParking').checked) extras += 50;
-
         if(document.getElementById('multiDropCheck').checked) {
             document.getElementById('waypoints').value.split('\n').forEach(line => { if(line.trim().length > 2) dropCount++; });
             extras += (dropCount * 50);
         }
-
         const rawCost = costTime + costFuel + extras;
         const quote = Math.ceil(((rawCost * (1 + (margin/100))) - 0.01) / 10) * 10;
         const netProfit = quote - rawCost;
-
         document.getElementById('breakdown').innerHTML = `
             <div class="flex justify-between"><span>TIME (${totalHrs.toFixed(2)} Hrs)</span><span>£${costTime.toFixed(2)}</span></div>
             <div class="flex justify-between"><span>FUEL (${miles} Mi)</span><span>£${costFuel.toFixed(2)}</span></div>
             ${dropCount > 0 ? `<div class="flex justify-between text-red-400 font-bold"><span>DROPS (${dropCount})</span><span>£${(dropCount * 50).toFixed(2)}</span></div>` : ''}
             ${(extras - (dropCount*50)) > 0 ? `<div class="flex justify-between"><span>EXTRAS</span><span>£${(extras - (dropCount*50)).toFixed(2)}</span></div>` : ''}
         `;
-        
         document.getElementById('profitDisp').innerText = '£' + (netProfit || 0).toFixed(2);
         document.getElementById('totalDisp').innerText = '£' + (quote || 0).toFixed(2);
     }
-
     window.onload = initMap;
 </script>
-
 </body>
 </html>
